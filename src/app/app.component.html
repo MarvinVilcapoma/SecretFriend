@@ -1,0 +1,269 @@
+<header class="hero-bg relative overflow-hidden px-4 pt-[max(2.5rem,env(safe-area-inset-top))] pb-[72px] text-white sm:pt-11">
+  <!-- Nieve cayendo -->
+  <div class="snow" aria-hidden="true">
+    @for (f of snowflakes; track $index) {
+      <span class="flake" [class.flake-glyph]="f.glyph"
+            [style.left.%]="f.left" [style.--size.px]="f.size" [style.--drift.px]="f.drift"
+            [style.opacity]="f.opacity" [style.animation-duration.s]="f.duration" [style.animation-delay.s]="f.delay">{{ f.glyph ? '❄' : '' }}</span>
+    }
+  </div>
+
+  <!-- Guirnalda de luces -->
+  <div class="lights" aria-hidden="true">
+    @for (l of lights; track $index) { <span class="light"></span> }
+  </div>
+
+  <div class="relative z-10 mx-auto flex max-w-[1120px] flex-wrap items-center gap-x-5 gap-y-4">
+    <div class="gift-badge relative grid size-12 shrink-0 place-items-center rounded-2xl bg-[#b91c1c] shadow-[0_8px_20px_rgb(0_0_0/.3)] ring-1 ring-white/20 sm:size-14" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="8" width="18" height="4" rx="1" /><path d="M12 8v13" /><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7" />
+        <path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5" />
+      </svg>
+      <span class="sparkle -top-2 -right-2">✦</span>
+      <span class="sparkle sparkle-2 -bottom-1.5 -left-2 text-[10px]">✦</span>
+    </div>
+    <div class="min-w-0 flex-1">
+      <h1 class="title-shine text-[clamp(1.55rem,4.5vw,2.3rem)] leading-tight font-extrabold tracking-tight">{{ config.eventName }}</h1>
+      <p class="rise mt-1 text-[.95rem] text-white/75 [animation-delay:.15s]">{{ config.eventSubtitle }}</p>
+    </div>
+    <div class="order-2 flex w-full flex-wrap items-center gap-2 sm:gap-2.5 lg:order-1 lg:w-auto">
+      @if (configured) {
+        <span class="stat rise [animation-delay:.2s]"><b>{{ board().length }}</b> {{ board().length === 1 ? 'persona' : 'personas' }}</span>
+        <span class="stat rise [animation-delay:.28s]"><b>{{ totalWishes() }}</b> {{ totalWishes() === 1 ? 'deseo' : 'deseos' }}</span>
+        <button type="button" class="btn btn-light rise ml-auto [animation-delay:.36s] lg:ml-1" (click)="share()" title="Compartir el enlace de la app">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
+          <span>Compartir<span class="hidden min-[400px]:inline"> enlace</span></span>
+        </button>
+      }
+    </div>
+    <button type="button" class="round-btn order-1 self-start sm:self-center lg:order-2" (click)="toggleTheme()"
+            [attr.aria-label]="dark() ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+            [title]="dark() ? 'Modo claro' : 'Modo oscuro'">
+      @if (dark()) {
+        <svg class="spin-in" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      } @else {
+        <svg class="spin-in" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+      }
+    </button>
+  </div>
+</header>
+
+
+<main class="relative mx-auto -mt-12 grid max-w-[1120px] grid-cols-1 items-start gap-6 px-3 pb-[max(3rem,env(safe-area-inset-bottom))] sm:px-4 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)]">
+  @if (!configured) {
+    <section class="card col-span-full">
+      <h2 class="mb-2 text-xl font-bold">Falta conectar Supabase</h2>
+      <ol class="grid list-decimal gap-1.5 pl-5">
+        <li>Crea un proyecto gratis en <b>supabase.com</b>.</li>
+        <li>En <b>SQL Editor</b>, pega y ejecuta <code class="rounded-md bg-surface-2 px-1.5 py-px text-[.85em]">supabase/schema.sql</code>.</li>
+        <li>En <b>Project Settings → API Keys</b>, copia la URL y la <i>publishable key</i> en <code class="rounded-md bg-surface-2 px-1.5 py-px text-[.85em]">src/app/config.ts</code>.</li>
+      </ol>
+    </section>
+  } @else {
+    <!-- ── Mi lista ── -->
+    <aside class="min-w-0 lg:sticky lg:top-4">
+      @if (!session()) {
+        <section class="card">
+          <h2 class="text-lg font-bold">Arma tu lista</h2>
+          <p class="mt-0.5 mb-4 text-sm text-ink-2">Así tu amigo secreto sabrá qué regalarte.</p>
+
+          <div class="mb-[18px] grid grid-cols-2 rounded-xl bg-surface-2 p-1" role="tablist">
+            @for (tab of [{ id: 'new', label: 'Soy nuevo' }, { id: 'back', label: 'Ya me registré' }]; track tab.id) {
+              <button type="button" role="tab"
+                      class="h-9 truncate rounded-[9px] px-2 text-sm font-semibold transition"
+                      [class]="joinMode() === tab.id ? 'bg-surface text-ink shadow-sm' : 'text-ink-2'"
+                      [attr.aria-selected]="joinMode() === tab.id" [title]="tab.label"
+                      (click)="setJoinMode($any(tab.id))">{{ tab.label }}</button>
+            }
+          </div>
+
+          <form (ngSubmit)="join($any($event)?.submitter)" class="grid gap-3.5">
+            @if (joinMode() === 'new') {
+              <label class="field">
+                <span class="field-label">Tu nombre</span>
+                <input class="input" name="name" [(ngModel)]="joinName" autocomplete="name" maxlength="60" placeholder="Ej. Ana Torres" required />
+              </label>
+            }
+            <label class="field">
+              <span class="field-label">DNI</span>
+              <input class="input tracking-wider" name="dni" [ngModel]="joinDni" (ngModelChange)="onDniInput($event)" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="8 dígitos" required />
+              <small class="flex gap-1.5 text-[.78rem] leading-snug text-ink-3">
+                <svg class="mt-px shrink-0" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                No se muestra a nadie. Solo evita que alguien se registre dos veces o a nombre de otro.
+              </small>
+            </label>
+
+            @if (joinError()) { <p class="alert" role="alert">{{ joinError() }}</p> }
+
+            <button type="submit" class="btn btn-primary w-full" [disabled]="joining()">
+              {{ joining() ? 'Un momento…' : (joinMode() === 'new' ? 'Crear mi lista' : 'Entrar') }}
+            </button>
+          </form>
+        </section>
+      } @else {
+        <section class="card">
+          <div class="mb-[18px] flex items-center gap-3">
+            <span class="relative shrink-0">
+              <span class="avatar size-12 text-base" [style.background]="avatarColor(session()!.id)">{{ initials(me()?.name ?? session()!.name) }}</span>
+              <!-- Gorro de Papá Noel -->
+              <svg class="santa-hat" viewBox="0 0 64 52" aria-hidden="true">
+                <path d="M10 40C14 20 28 6 46 8c8 1 12 8 11 16l-9-3c-6-2-14 2-18 19Z" fill="#dc2626"/>
+                <path d="M46 8c8 1 12 8 11 16l-4-1.5c1-6-2-11-7-14.5Z" fill="#991b1b" opacity=".5"/>
+                <rect x="4" y="36" width="42" height="11" rx="5.5" fill="#fff"/>
+                <circle cx="56" cy="27" r="6.5" fill="#fff"/>
+              </svg>
+            </span>
+            <div class="min-w-0">
+              <h2 class="text-lg leading-snug font-bold [overflow-wrap:anywhere]">Hola, {{ me()?.name ?? session()!.name }}</h2>
+              <button type="button" class="link-btn" (click)="leaveDevice()">No soy yo / salir</button>
+            </div>
+          </div>
+
+          <form (ngSubmit)="saveWish($any($event)?.submitter)" class="grid gap-3.5 rounded-xl border border-line bg-surface-2 p-3.5"
+                [class.ring-2]="editingId()" [class.ring-gold]="editingId()" [class.border-transparent]="editingId()">
+            @if (editingId()) { <p class="text-xs font-bold tracking-wide text-gold uppercase">Editando deseo</p> }
+            <label class="field">
+              <span class="field-label">¿Qué te gustaría recibir?</span>
+              <input id="wish-title" class="input" name="title" [(ngModel)]="draft.title" maxlength="120" placeholder="Ej. Audífonos inalámbricos" required />
+            </label>
+
+            @if (showMore()) {
+              <div class="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2">
+                <label class="field">
+                  <span class="field-label">Precio aprox. <em>opcional</em></span>
+                  <input class="input" name="price" [(ngModel)]="draft.price_hint" maxlength="40" placeholder="Ej. S/ 80" />
+                </label>
+                <label class="field">
+                  <span class="field-label">Enlace <em>opcional</em></span>
+                  <input class="input" name="link" [(ngModel)]="draft.link" maxlength="500" inputmode="url" placeholder="Tienda o foto" />
+                </label>
+              </div>
+              <label class="field">
+                <span class="field-label">Detalles <em>opcional</em></span>
+                <textarea class="input min-h-16 resize-y" name="note" [(ngModel)]="draft.note" maxlength="500" rows="2" placeholder="Talla, color, marca…"></textarea>
+              </label>
+            } @else {
+              <button type="button" class="link-btn" (click)="showMore.set(true)">+ Agregar precio, enlace o detalles</button>
+            }
+
+            @if (wishError()) { <p class="alert" role="alert">{{ wishError() }}</p> }
+
+            <div class="flex flex-wrap justify-end gap-2">
+              @if (editingId()) {
+                <button type="button" class="btn btn-ghost flex-1 min-[420px]:flex-none" (click)="cancelEdit()">Cancelar</button>
+              }
+              <button type="submit" class="btn btn-primary flex-1 min-[420px]:flex-none" [disabled]="saving()">
+                {{ saving() ? 'Guardando…' : (editingId() ? 'Guardar cambios' : 'Agregar deseo') }}
+              </button>
+            </div>
+          </form>
+
+          @if (me(); as mine) {
+            @if (mine.wishes.length) {
+              <p class="mt-5 mb-1 text-xs font-bold tracking-wide text-ink-3 uppercase">Mi lista · {{ mine.wishes.length }}</p>
+              <ul class="grid gap-0.5">
+                @for (w of mine.wishes; track w.id) {
+                  <li class="wish-item" [class.is-current]="editingId() === w.id">
+                    <ng-container *ngTemplateOutlet="wishBody; context: { $implicit: w }" />
+                    <div class="flex shrink-0 gap-0.5">
+                      <button type="button" class="icon-btn" (click)="editWish(w)" aria-label="Editar" title="Editar">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                      </button>
+                      <button type="button" class="icon-btn icon-btn-danger" (click)="removeWish(w)" aria-label="Borrar" title="Borrar">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>
+                      </button>
+                    </div>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <div class="mt-5 grid justify-items-center gap-1 rounded-xl border border-dashed border-line px-4 py-6 text-center">
+                <span class="float text-2xl" aria-hidden="true">🎁</span>
+                <p class="text-sm text-ink-2">Aún no agregas deseos. ¡Empieza arriba!</p>
+              </div>
+            }
+          }
+        </section>
+      }
+    </aside>
+
+    <!-- ── Listas de todos ── -->
+    <section class="min-w-0">
+      <div class="mb-4 flex min-h-12 flex-wrap items-center justify-between gap-3">
+        <h2 class="flex items-center gap-2 text-lg font-bold text-ink lg:text-white">
+          <span class="swing inline-block" aria-hidden="true">🎄</span> Listas de todos
+        </h2>
+        <label class="relative w-full sm:w-[260px]">
+          <svg class="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-ink-3" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input class="input h-10 rounded-full py-0 pl-10" type="search" placeholder="Buscar persona o regalo"
+                 [value]="query()" (input)="query.set($any($event.target).value)" aria-label="Buscar" />
+        </label>
+      </div>
+
+      @if (loading()) {
+        <div class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,260px),1fr))] gap-4">
+          @for (i of [1, 2, 3]; track i) { <div class="card skeleton"></div> }
+        </div>
+      } @else if (loadError()) {
+        <div class="card grid justify-items-center gap-3 text-center">
+          <p>{{ loadError() }}</p>
+          <button type="button" class="btn btn-primary" (click)="load()">Reintentar</button>
+        </div>
+      } @else if (!others().length) {
+        <div class="card grid justify-items-center gap-2 py-10 text-center">
+          <span class="float text-3xl" aria-hidden="true">{{ query() ? '🔍' : '🎄' }}</span>
+          <p class="max-w-xs text-ink-2">
+            {{ query() ? 'Nadie coincide con la búsqueda.' : 'Todavía no hay más personas. Comparte el enlace para que se unan.' }}
+          </p>
+        </div>
+      } @else {
+        <div class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,260px),1fr))] gap-4">
+          @for (p of others(); track p.id; let i = $index) {
+            <article class="card person-card" [style.animation-delay.ms]="i * 80">
+              <div class="h-1.5 shrink-0" [style.background]="avatarColor(p.id)" aria-hidden="true"></div>
+              <header class="flex items-center gap-2.5 px-[18px] pt-4 pb-3">
+                <span class="avatar" [style.background]="avatarColor(p.id)">{{ initials(p.name) }}</span>
+                <div class="min-w-0 flex-1">
+                  <h3 class="leading-snug font-bold [overflow-wrap:anywhere]" [title]="p.name">{{ p.name }}</h3>
+                  <span class="text-[.82rem] text-ink-2">{{ p.wishes.length }} {{ p.wishes.length === 1 ? 'deseo' : 'deseos' }}</span>
+                </div>
+              </header>
+              <div class="flex-1 px-[18px] pb-3">
+                @if (p.wishes.length) {
+                  <ul class="grid gap-0.5">
+                    @for (w of p.wishes; track w.id) {
+                      <li class="wish-item">
+                        <ng-container *ngTemplateOutlet="wishBody; context: { $implicit: w }" />
+                      </li>
+                    }
+                  </ul>
+                } @else {
+                  <p class="pb-2 text-[.85rem] text-ink-3 italic">Aún no agrega deseos.</p>
+                }
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </section>
+  }
+</main>
+
+<!-- Un deseo: título, precio, detalles y enlace. Nada se recorta sin mostrar el texto completo al pasar el mouse. -->
+<ng-template #wishBody let-w>
+  <div class="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2 gap-y-1">
+    <span class="wish-title" [title]="w.title">{{ w.title }}</span>
+    @if (w.price_hint) { <span class="chip" [title]="'Precio aprox.: ' + w.price_hint">{{ w.price_hint }}</span> }
+    @if (w.note) { <p class="wish-note" [title]="w.note">{{ w.note }}</p> }
+    @if (w.link) {
+      <a class="wish-link" [href]="w.link" target="_blank" rel="noopener noreferrer" [title]="w.link">
+        {{ linkHost(w.link) }}
+        <svg class="shrink-0" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg>
+      </a>
+    }
+  </div>
+</ng-template>
+
+@if (toast()) {
+  <div class="toast fixed bottom-[max(20px,env(safe-area-inset-bottom))] left-1/2 z-50 max-w-[calc(100vw-32px)] -translate-x-1/2 rounded-full bg-ink px-[18px] py-2.5 text-center text-sm font-medium text-bg shadow-[0_10px_30px_rgb(0_0_0/.25)]" role="status"><span class="toast-icon" aria-hidden="true">🎄</span> {{ toast() }}</div>
+}
